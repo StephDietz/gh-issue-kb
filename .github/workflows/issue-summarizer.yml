@@ -14,6 +14,7 @@ jobs:
         run: |
           curl -X POST https://gh-issue-kb-steph-playground.hypermode.app/graphql \
           -H "Content-Type: application/json" \
+          -H "Authorization: Bearer ${{ secrets.HYPERMODE_API_KEY }}" \
           -d '{
             "query": "query { simpleHandler }"
           }'
