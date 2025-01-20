@@ -15,5 +15,5 @@ jobs:
           curl -X POST https://gh-issue-kb-steph-playground.hypermode.app/graphql \
           -H "Content-Type: application/json" \
           -d '{
-            "query": "query { SimpleHandler }"
+            "query": "query { simpleHandler }"
           }'
