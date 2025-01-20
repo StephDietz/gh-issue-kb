@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Trigger Hypermode Function
         run: |
-          curl -X POST http://localhost:8686/explorer \
+          curl -X POST https://gh-issue-kb-steph-playground.hypermode.app/graphql \
           -H "Content-Type: application/json" \
           -H "Authorization: Bearer ${{ secrets.HYPERMODE_API_KEY }}" \
           -d '{
