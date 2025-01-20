@@ -25,7 +25,7 @@ jobs:
         -d '{
           "query": "query { simpleHandler(repo: \"test/repo\", issueNumber: 1, title: \"Test\", body: \"Test body\") }"
         }'
-- - name: Trigger Hypermode Function
+      - name: Trigger Hypermode Function
         run: |
           curl -X POST https://gh-issue-kb-steph-playground.hypermode.app/graphql \
           -H "Content-Type: application/json" \
