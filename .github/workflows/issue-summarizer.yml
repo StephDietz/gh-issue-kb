@@ -17,11 +17,19 @@ jobs:
           echo "Title: ${{ github.event.issue.title }}"
           echo "Body: ${{ github.event.issue.body }}"
 
-      - name: Test Simple Query
+      - name: Trigger Hypermode Function
         run: |
           curl -X POST https://gh-issue-kb-steph-playground.hypermode.app/graphql \
           -H "Content-Type: application/json" \
           -H "Authorization: Bearer ${{ secrets.HYPERMODE_API_KEY }}" \
-          -d '{
-            "query": "query { simpleHandler(repo: \"test/repo\", issueNumber: 1, title: \"Test\", body: \"Test body\") }"
+          --data-raw '{
+            "query": "query($repo: String!, $issueNumber: Int!, $title: String!, $body: String!) { 
+              simpleHandler(repo: $repo, issueNumber: $issueNumber, title: $title, body: $body) 
+            }",
+            "variables": {
+              "repo": "'"${{ github.repository }}"'",
+              "issueNumber": '"${{ github.event.issue.number }}"',
+              "title": "'"${{ github.event.issue.title }}"'",
+              "body": "'"${{ github.event.issue.body }}"'"
+            }
           }'
