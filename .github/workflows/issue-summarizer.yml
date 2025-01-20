@@ -1,4 +1,4 @@
-name: GitHub Issue Summarizer
+name: Issue Summarizer
 
 on:
   issues:
@@ -6,11 +6,14 @@ on:
       - closed
 
 jobs:
-  summarize:
+  trigger-hypermode:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Summarize Issue
+      - name: Trigger Hypermode Function
         run: |
           curl -X POST https://gh-issue-kb-steph-playground.hypermode.app/graphql \
           -H "Content-Type: application/json" \
-          -d "{\"repo\": \"${{ github.repository }}\", \"issue_number\": ${{ github.event.issue.number }}, \"token\": \"${{ secrets.GITHUB_TOKEN }}\"}"
+          -d '{
+            "query": "query { SimpleHandler(repo: \\"${{ github.repository }}\\", issueNumber: ${{ github.event.issue.number }}, token: \\"${{ secrets.GITHUB_TOKEN }}\\") }"
+          }'
