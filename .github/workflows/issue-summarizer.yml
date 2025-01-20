@@ -11,6 +11,6 @@ jobs:
     steps:
       - name: Summarize Issue
         run: |
-          curl -X POST https://api.hypermode.ai/SummarizeIssue \
+          curl -X POST https://gh-issue-kb-steph-playground.hypermode.app/graphql\
           -H "Content-Type: application/json" \
           -d "{\"repo\": \"${{ github.repository }}\", \"issue_number\": ${{ github.event.issue.number }}, \"token\": \"${{ secrets.GITHUB_TOKEN }}\"}"
