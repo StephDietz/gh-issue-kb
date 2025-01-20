@@ -16,8 +16,8 @@ jobs:
           -H "Content-Type: application/json" \
           -H "Authorization: Bearer ${{ secrets.HYPERMODE_API_KEY }}" \
           -d '{
-            "query": "mutation($repo: String!, $issueNumber: Int!, $title: String!, $body: String!) { 
-              SimpleHandler(repo: $repo, issueNumber: $issueNumber, title: $title, body: $body) 
+            "query": "query($repo: String!, $issueNumber: Int!, $title: String!, $body: String!) { 
+              simpleHandler(repo: $repo, issueNumber: $issueNumber, title: $title, body: $body) 
             }",
             "variables": {
               "repo": "${{ github.repository }}",
