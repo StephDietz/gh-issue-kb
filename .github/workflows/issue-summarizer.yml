@@ -10,6 +10,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Log Inputs for Debugging
+        run: |
+          echo "Repository: ${{ github.repository }}"
+          echo "Issue Number: ${{ github.event.issue.number }}"
+          echo "Title: ${{ github.event.issue.title }}"
+          echo "Body: ${{ github.event.issue.body }}"
+
       - name: Trigger Hypermode Function
         run: |
           curl -X POST https://gh-issue-kb-steph-playground.hypermode.app/graphql \
