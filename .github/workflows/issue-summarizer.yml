@@ -15,5 +15,5 @@ jobs:
           curl -X POST https://gh-issue-kb-steph-playground.hypermode.app/graphql \
           -H "Content-Type: application/json" \
           -d '{
-            "query": "query { SimpleHandler(repo: \\"${{ github.repository }}\\", issueNumber: ${{ github.event.issue.number }}, token: \\"${{ secrets.GITHUB_TOKEN }}\\") }"
+            "query": "query { SimpleHandler }"
           }'
