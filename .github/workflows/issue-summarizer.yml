@@ -16,5 +16,5 @@ jobs:
           -H "Content-Type: application/json" \
           -H "Authorization: Bearer ${{ secrets.HYPERMODE_API_KEY }}" \
           -d '{
-            "query": "query { simpleHandler(repo: \"${{ github.repository }}\", issueNumber: ${{ github.event.issue.number }}, title: \"${{ github.event.issue.title }}\", body: \"${{ github.event.issue.body }}\") }"
+            "query": "query { issueClosedHandler(repo: \"${{ github.repository }}\", issueNumber: ${{ github.event.issue.number }}, title: \"${{ github.event.issue.title }}\", body: \"${{ github.event.issue.body }}\") }"
           }'
