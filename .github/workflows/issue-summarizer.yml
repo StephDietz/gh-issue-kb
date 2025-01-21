@@ -27,9 +27,9 @@ jobs:
               simpleHandler(repo: $repo, issueNumber: $issueNumber, title: $title, body: $body) 
             }",
             "variables": {
-              "repo": "${{ github.repository }}",
-              "issueNumber": ${{ github.event.issue.number }},
-              "title": "${{ github.event.issue.title }}",
-              "body": "${{ github.event.issue.body }}"
+              "repo": "'"${{ github.repository }}"'",
+              "issueNumber": '"${{ github.event.issue.number }}"',
+              "title": "'"${{ github.event.issue.title }}"'",
+              "body": "'"${{ github.event.issue.body }}"'"
             }
           }'
