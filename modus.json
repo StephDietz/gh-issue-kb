@@ -13,5 +13,11 @@
       "provider": "hugging-face",
       "connection": "hypermode"
     }
+  },
+  "connections": {
+    "github": {
+      "type": "http",
+      "baseUrl": "https://api.github.com/"
+    }
   }
 }
