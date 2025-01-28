@@ -9,6 +9,9 @@ jobs:
   trigger-hypermode:
     runs-on: ubuntu-latest
 
+    permissions:
+      issues: write # Grant write permissions for issues
+
     steps:
       - name: Trigger Hypermode Function
         run: |
