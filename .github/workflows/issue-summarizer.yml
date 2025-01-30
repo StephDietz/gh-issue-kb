@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      issues: write # Grant write permissions for issues
+      discussions: write
 
     steps:
       - name: Trigger Hypermode Function
@@ -21,3 +21,5 @@ jobs:
           -d '{
             "query": "query { issueClosedHandler(repo: \"${{ github.repository }}\", issueNumber: ${{ github.event.issue.number }}, token: \"${{ secrets.GITHUB_TOKEN }}\") }"
           }'
+// how to make this action usable for other repos?
+// keep it as a workflow and have ppl copy the yaml file 
