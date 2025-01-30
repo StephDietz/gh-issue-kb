@@ -123,7 +123,7 @@ func PostDiscussionToRepo(repo string, title string, body string, token string) 
 	return nil
 }
 
-// ✅ Fetch repository ID from GitHub GraphQL API
+// Fetch repository ID from GitHub GraphQL API
 func getRepositoryID(owner string, repoName string, token string) (string, error) {
 	query := `
 	query($owner: String!, $name: String!) {
@@ -172,7 +172,7 @@ func getRepositoryID(owner string, repoName string, token string) (string, error
 	return result.Data.Repository.ID, nil
 }
 
-// ✅ Fetch the first available discussion category ID
+// Fetch the first available discussion category ID
 func getDiscussionCategoryID(repoID string, token string) (string, error) {
 	query := `
 	query($repoID: ID!) {
@@ -227,7 +227,7 @@ func getDiscussionCategoryID(repoID string, token string) (string, error) {
 		return "", fmt.Errorf("error parsing discussion category ID response: %w", err)
 	}
 
-	// ✅ Return the first available category
+	// Return the first available category
 	if len(result.Data.Node.DiscussionCategories.Nodes) > 0 {
 		return result.Data.Node.DiscussionCategories.Nodes[0].ID, nil
 	}
@@ -381,7 +381,7 @@ func IssueClosedHandler(repo string, issueNumber int, token string) {
 	fmt.Printf(kbArticle)
 
 
-	// ✅ Post the KB article as a GitHub discussion
+	// Post the KB article as a GitHub discussion
 	err = PostDiscussionToRepo(repo, fmt.Sprintf("Issue Summary: %s", issue.Title), kbArticle, token)
 	if err != nil {
 		fmt.Printf("❌ Error posting KB article as a discussion: %v\n", err)
