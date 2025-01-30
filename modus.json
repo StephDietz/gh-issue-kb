@@ -13,7 +13,6 @@
       "provider": "hugging-face",
       "connection": "hypermode"
     }
-    // try adding deepseek without the reasoning
   },
   "connections": {
     "github": {

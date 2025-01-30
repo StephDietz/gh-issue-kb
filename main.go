@@ -57,81 +57,183 @@ type GitHubComment struct {
 }
 
 func PostDiscussionToRepo(repo string, title string, body string, token string) error {
-    repoOwner := strings.Split(repo, "/")[0]
-    repoName := strings.Split(repo, "/")[1]
+	// Extract owner and repository name
+	parts := strings.Split(repo, "/")
+	if len(parts) != 2 {
+		return fmt.Errorf("invalid repository format: %s", repo)
+	}
+	owner, repoName := parts[0], parts[1]
 
-    // Step 1: Get Repository ID
-    query := `{
-        "query": "query { repository(owner: \"%s\", name: \"%s\") { id } }"
-    }`
-    query = fmt.Sprintf(query, repoOwner, repoName)
+	// Get the repository ID
+	repoID, err := getRepositoryID(owner, repoName, token)
+	if err != nil {
+		return fmt.Errorf("error fetching repository ID: %w", err)
+	}
 
-    options := &http.RequestOptions{
-        Method: "POST",
-        Headers: map[string]string{
-            "Authorization": "Bearer " + token,
-            "Content-Type":  "application/json",
-        },
-        Body: json.RawMessage(query),
-    }
+	// Get the first available discussion category
+	categoryID, err := getDiscussionCategoryID(repoID, token)
+	if err != nil {
+		return fmt.Errorf("error fetching discussion category ID: %w", err)
+	}
 
-    request := http.NewRequest("https://api.github.com/graphql", options)
-    response, err := http.Fetch(request)
-    if err != nil {
-        return fmt.Errorf("error fetching repository ID: %w", err)
-    }
+	// GraphQL mutation to create a discussion
+	createDiscussionMutation := `
+	mutation($repoID: ID!, $categoryID: ID!, $title: String!, $body: String!) {
+		createDiscussion(input: {repositoryId: $repoID, categoryId: $categoryID, title: $title, body: $body}) {
+			discussion {
+				url
+			}
+		}
+	}`
 
-    var repoResponse struct {
-        Data struct {
-            Repository struct {
-                ID string `json:"id"`
-            } `json:"repository"`
-        } `json:"data"`
-    }
-    if err := json.Unmarshal(response.Body, &repoResponse); err != nil {
-        return fmt.Errorf("error parsing repository ID response: %w", err)
-    }
-    
-    repoID := repoResponse.Data.Repository.ID
-    if repoID == "" {
-        return fmt.Errorf("failed to retrieve repository ID")
-    }
+	// Variables for the mutation
+	variables := map[string]string{
+		"repoID":     repoID,
+		"categoryID": categoryID,
+		"title":      title,
+		"body":       body,
+	}
 
-    // Step 2: Create Discussion
-    discussionMutation := `{
-        "query": "mutation { createDiscussion(input: {repositoryId: \"%s\", categoryId: \"%s\", title: \"%s\", body: \"%s\"}) { discussion { url } } }"
-    }`
-    
-    // Replace with a valid Discussion Category ID (can be retrieved from the GitHub API)
-    categoryID := "YOUR_DISCUSSION_CATEGORY_ID"
+	payload := map[string]interface{}{
+		"query":     createDiscussionMutation,
+		"variables": variables,
+	}
 
-    discussionMutation = fmt.Sprintf(discussionMutation, repoID, categoryID, title, body)
+	// Send the request
+	options := &http.RequestOptions{
+		Method: "POST",
+		Headers: map[string]string{
+			"Authorization": "Bearer " + token,
+			"Content-Type":  "application/json",
+		},
+		Body: payload,
+	}
 
-    options.Body = json.RawMessage(discussionMutation)
-    request = http.NewRequest("https://api.github.com/graphql", options)
-    response, err = http.Fetch(request)
-    if err != nil {
-        return fmt.Errorf("error creating discussion: %w", err)
-    }
+	request := http.NewRequest("https://api.github.com/graphql", options)
+	response, err := http.Fetch(request)
+	if err != nil {
+		return fmt.Errorf("error creating discussion: %w", err)
+	}
 
-    var discussionResponse struct {
-        Data struct {
-            CreateDiscussion struct {
-                Discussion struct {
-                    URL string `json:"url"`
-                } `json:"discussion"`
-            } `json:"createDiscussion"`
-        } `json:"data"`
-    }
-    
-    if err := json.Unmarshal(response.Body, &discussionResponse); err != nil {
-        return fmt.Errorf("error parsing discussion response: %w", err)
-    }
+	if response.Status != 200 {
+		return fmt.Errorf("failed to create discussion, status: %d, body: %s", response.Status, string(response.Body))
+	}
 
-    fmt.Printf("Discussion created successfully: %s\n", discussionResponse.Data.CreateDiscussion.Discussion.URL)
-    return nil
+	fmt.Println("✅ Discussion created successfully.")
+	return nil
 }
 
+// ✅ Fetch repository ID from GitHub GraphQL API
+func getRepositoryID(owner string, repoName string, token string) (string, error) {
+	query := `
+	query($owner: String!, $name: String!) {
+		repository(owner: $owner, name: $name) {
+			id
+		}
+	}`
+
+	variables := map[string]string{
+		"owner": owner,
+		"name":  repoName,
+	}
+
+	payload := map[string]interface{}{
+		"query":     query,
+		"variables": variables,
+	}
+
+	options := &http.RequestOptions{
+		Method: "POST",
+		Headers: map[string]string{
+			"Authorization": "Bearer " + token,
+			"Content-Type":  "application/json",
+		},
+		Body: payload,
+	}
+
+	request := http.NewRequest("https://api.github.com/graphql", options)
+	response, err := http.Fetch(request)
+	if err != nil {
+		return "", fmt.Errorf("error fetching repository ID: %w", err)
+	}
+
+	var result struct {
+		Data struct {
+			Repository struct {
+				ID string `json:"id"`
+			} `json:"repository"`
+		} `json:"data"`
+	}
+
+	if err := json.Unmarshal(response.Body, &result); err != nil {
+		return "", fmt.Errorf("error parsing repository ID response: %w", err)
+	}
+
+	return result.Data.Repository.ID, nil
+}
+
+// ✅ Fetch the first available discussion category ID
+func getDiscussionCategoryID(repoID string, token string) (string, error) {
+	query := `
+	query($repoID: ID!) {
+		node(id: $repoID) {
+			... on Repository {
+				discussionCategories(first: 1) {
+					nodes {
+						id
+					}
+				}
+			}
+		}
+	}`
+
+	variables := map[string]string{
+		"repoID": repoID,
+	}
+
+	payload := map[string]interface{}{
+		"query":     query,
+		"variables": variables,
+	}
+
+	options := &http.RequestOptions{
+		Method: "POST",
+		Headers: map[string]string{
+			"Authorization": "Bearer " + token,
+			"Content-Type":  "application/json",
+		},
+		Body: payload,
+	}
+
+	request := http.NewRequest("https://api.github.com/graphql", options)
+	response, err := http.Fetch(request)
+	if err != nil {
+		return "", fmt.Errorf("error fetching discussion category ID: %w", err)
+	}
+
+	var result struct {
+		Data struct {
+			Node struct {
+				DiscussionCategories struct {
+					Nodes []struct {
+						ID string `json:"id"`
+					} `json:"nodes"`
+				} `json:"discussionCategories"`
+			} `json:"node"`
+		} `json:"data"`
+	}
+
+	if err := json.Unmarshal(response.Body, &result); err != nil {
+		return "", fmt.Errorf("error parsing discussion category ID response: %w", err)
+	}
+
+	// ✅ Return the first available category
+	if len(result.Data.Node.DiscussionCategories.Nodes) > 0 {
+		return result.Data.Node.DiscussionCategories.Nodes[0].ID, nil
+	}
+
+	return "", fmt.Errorf("no discussion categories found in repository")
+}
 
 
 func GenerateKBArticle(issue *GitHubIssue, comments []GitHubComment) (string, error) {
@@ -278,11 +380,13 @@ func IssueClosedHandler(repo string, issueNumber int, token string) {
 	// Output the KB article
 	fmt.Printf(kbArticle)
 
-	err = PostDiscussionToRepo(repo, issue.Title, kbArticle, token)
-    if err != nil {
-        fmt.Printf("Error creating GitHub discussion: %v\n", err)
-        return
-    }
+
+	// ✅ Post the KB article as a GitHub discussion
+	err = PostDiscussionToRepo(repo, fmt.Sprintf("Issue Summary: %s", issue.Title), kbArticle, token)
+	if err != nil {
+		fmt.Printf("❌ Error posting KB article as a discussion: %v\n", err)
+		return
+	}
 
     fmt.Println("KB article successfully posted as a comment.")
 }
