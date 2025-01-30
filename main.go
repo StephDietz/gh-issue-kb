@@ -56,7 +56,7 @@ type GitHubComment struct {
 	UpdatedAt string     `json:"updated_at"`
 }
 
-func PostDiscussionToRepo(repo string, title string, body string, token string) error {
+func postDiscussionToRepo(repo string, title string, body string, token string) error {
 	// Extract owner and repository name
 	parts := strings.Split(repo, "/")
 	if len(parts) != 2 {
@@ -236,7 +236,7 @@ func getDiscussionCategoryID(repoID string, token string) (string, error) {
 }
 
 
-func GenerateKBArticle(issue *GitHubIssue, comments []GitHubComment) (string, error) {
+func generateKBArticle(issue *GitHubIssue, comments []GitHubComment) (string, error) {
 	prompt := fmt.Sprintf(`
 		Generate a detailed markdown article givin a concise summary of the following GitHub issue. Include the problem, the solution (if on exists), and any other relevant details. Please mention the users involved and any significant involvement in the issue.
 		
@@ -300,7 +300,7 @@ func formatComments(comments []GitHubComment) string {
 	return strings.Join(formatted, "\n")
 }
 
-func FetchIssueDetails(repo string, issueNumber int) (*GitHubIssue, error) {
+func fetchIssueDetails(repo string, issueNumber int) (*GitHubIssue, error) {
 	url := fmt.Sprintf("https://api.github.com/repos/%s/issues/%d", repo, issueNumber)
 
 	options := &http.RequestOptions{
@@ -330,7 +330,7 @@ func FetchIssueDetails(repo string, issueNumber int) (*GitHubIssue, error) {
 	return &issue, nil
 }
 
-func FetchIssueComments(commentsURL string) ([]GitHubComment, error) {
+func fetchIssueComments(commentsURL string) ([]GitHubComment, error) {
 	options := &http.RequestOptions{
 		Method: "GET",
 		Headers: map[string]string{
@@ -359,19 +359,19 @@ func FetchIssueComments(commentsURL string) ([]GitHubComment, error) {
 }
 
 func IssueClosedHandler(repo string, issueNumber int, token string) {
-	issue, err := FetchIssueDetails(repo, issueNumber)
+	issue, err := fetchIssueDetails(repo, issueNumber)
 	if err != nil {
 		fmt.Printf("Error fetching issue details: %v\n", err)
 		return
 	}
 
-	comments, err := FetchIssueComments(issue.CommentsURL)
+	comments, err := fetchIssueComments(issue.CommentsURL)
 	if err != nil {
 		fmt.Printf("Error fetching issue comments: %v\n", err)
 		return
 	}
 
-	kbArticle, err := GenerateKBArticle(issue, comments)
+	kbArticle, err := generateKBArticle(issue, comments)
 	if err != nil {
 		fmt.Printf("Error generating KB article: %v\n", err)
 		return
@@ -382,7 +382,7 @@ func IssueClosedHandler(repo string, issueNumber int, token string) {
 
 
 	// Post the KB article as a GitHub discussion
-	err = PostDiscussionToRepo(repo, fmt.Sprintf("Issue Summary: %s", issue.Title), kbArticle, token)
+	err = postDiscussionToRepo(repo, fmt.Sprintf("Issue Summary: %s", issue.Title), kbArticle, token)
 	if err != nil {
 		fmt.Printf("❌ Error posting KB article as a discussion: %v\n", err)
 		return
